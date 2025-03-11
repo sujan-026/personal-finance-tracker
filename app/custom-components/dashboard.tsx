@@ -65,7 +65,18 @@ const SummaryCard = ({
   </Card>
 );
 
-const TransactionItem = ({ transaction }: { transaction: { id: string; type: "income" | "expense"; description: string; category: string; date: string; amount: number; } }) => (
+const TransactionItem = ({
+  transaction,
+}: {
+  transaction: {
+    id: string;
+    type: "income" | "expense";
+    description?: string;
+    category: string;
+    date: string;
+    amount: number;
+  };
+}) => (
   <div className="flex items-center justify-between py-3 border-b border-slate-100">
     <div className="flex items-center gap-3">
       <div className="rounded-full bg-slate-100 p-2">
@@ -76,7 +87,7 @@ const TransactionItem = ({ transaction }: { transaction: { id: string; type: "in
         )}
       </div>
       <div>
-        <p className="font-medium text-sm">{transaction.description}</p>
+        <p className="font-medium text-sm">{transaction.description ?? ""}</p>
         <p className="text-xs text-slate-500">
           {transaction.category} • {transaction.date}
         </p>
@@ -237,7 +248,7 @@ export default function FinanceDashboard() {
                       <YAxis />
                       <Tooltip
                         formatter={(value) => [
-                          formatCurrency(value),
+                          formatCurrency(Number(value)),
                           activeChart === "expenses" ? "Expenses" : "Income",
                         ]}
                       />
@@ -284,7 +295,10 @@ export default function FinanceDashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) => [formatCurrency(value), "Amount"]}
+                        formatter={(value) => [
+                          formatCurrency(Number(value)),
+                          "Amount",
+                        ]}
                       />
                       <Legend />
                     </PieChart>
