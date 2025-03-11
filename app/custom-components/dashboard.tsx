@@ -1,4 +1,6 @@
+// components/dashboard.tsx
 "use client";
+
 import { useState } from "react";
 import {
   Card,
@@ -23,17 +25,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import {
-  Calendar,
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Activity,
   ShoppingBag,
   Coffee,
   Home,
   Car,
-  Gift,
-  CreditCard,
 } from "lucide-react";
 
 // Sample data
@@ -144,7 +142,6 @@ const TransactionItem = ({ transaction }) => (
   </div>
 );
 
-// Main component
 const FinanceDashboard = () => {
   const [activeChart, setActiveChart] = useState("expenses");
 
@@ -188,7 +185,7 @@ const FinanceDashboard = () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Monthly chart */}
+            {/* Monthly Chart */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>Monthly Overview</CardTitle>
@@ -238,7 +235,7 @@ const FinanceDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Category chart */}
+            {/* Category Chart */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>Expense Categories</CardTitle>
@@ -270,7 +267,7 @@ const FinanceDashboard = () => {
             </Card>
           </div>
 
-          {/* Recent transactions */}
+          {/* Recent Transactions */}
           <Card className="mt-4 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -294,10 +291,7 @@ const FinanceDashboard = () => {
               </div>
             </CardContent>
             <CardFooter className="border-t bg-slate-50 py-3">
-              <button
-                className="w-full rounded-md border border-blue-600 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
-                onClick={() => console.log("Button clicked!")}
-              >
+              <button className="w-full rounded-md border border-blue-600 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50">
                 Add New Transaction
               </button>
             </CardFooter>
