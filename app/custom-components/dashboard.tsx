@@ -41,7 +41,7 @@ const SummaryCard = ({
   title: string;
   value: number;
   trend: "up" | "down";
-  icon: JSX.Element;
+  icon: React.ReactNode;
   trendValue: number;
 }) => (
   <Card className="shadow-sm">
