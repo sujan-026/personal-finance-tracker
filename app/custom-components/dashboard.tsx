@@ -1,7 +1,7 @@
 // components/dashboard.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -24,88 +24,33 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import {
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  ShoppingBag,
-  Coffee,
-  Home,
-  Car,
-} from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { useFinance } from "@/app/context/FinanceContext";
 
-// Sample data
-const monthlyData = [
-  { name: "Jan", expenses: 2400, income: 4000 },
-  { name: "Feb", expenses: 1398, income: 3000 },
-  { name: "Mar", expenses: 9800, income: 2000 },
-  { name: "Apr", expenses: 3908, income: 2780 },
-  { name: "May", expenses: 4800, income: 1890 },
-  { name: "Jun", expenses: 3800, income: 2390 },
-];
+// Helper function to format currency
+const formatCurrency = (value: number) =>
+  `$${Math.abs(value).toLocaleString()}`;
 
-const categoryData = [
-  { name: "Food", value: 2400, color: "#0ea5e9" },
-  { name: "Rent", value: 4567, color: "#8b5cf6" },
-  { name: "Transport", value: 1398, color: "#10b981" },
-  { name: "Entertainment", value: 9800, color: "#f59e0b" },
-  { name: "Shopping", value: 3908, color: "#ef4444" },
-];
-
-const transactions = [
-  {
-    id: 1,
-    date: "2025-03-10",
-    category: "Food",
-    description: "Grocery shopping",
-    amount: -120.5,
-    icon: <ShoppingBag size={16} />,
-  },
-  {
-    id: 2,
-    date: "2025-03-09",
-    category: "Coffee",
-    description: "Starbucks",
-    amount: -4.75,
-    icon: <Coffee size={16} />,
-  },
-  {
-    id: 3,
-    date: "2025-03-08",
-    category: "Rent",
-    description: "Monthly rent",
-    amount: -1200.0,
-    icon: <Home size={16} />,
-  },
-  {
-    id: 4,
-    date: "2025-03-07",
-    category: "Transport",
-    description: "Gas",
-    amount: -45.0,
-    icon: <Car size={16} />,
-  },
-  {
-    id: 5,
-    date: "2025-03-06",
-    category: "Income",
-    description: "Salary",
-    amount: 3200.0,
-    icon: <DollarSign size={16} />,
-  },
-];
-
-// Custom components
-const SummaryCard = ({ title, value, trend, icon, trendValue }: { title: string; value: number; trend: "up" | "down"; icon: JSX.Element; trendValue: number; }) => (
+const SummaryCard = ({
+  title,
+  value,
+  trend,
+  icon,
+  trendValue,
+}: {
+  title: string;
+  value: number;
+  trend: "up" | "down";
+  icon: JSX.Element;
+  trendValue: number;
+}) => (
   <Card className="shadow-sm">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
       <div className="rounded-full bg-slate-100 p-2">{icon}</div>
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">
-        ${Math.abs(value).toLocaleString()}
-      </div>
+      <div className="text-2xl font-bold">{formatCurrency(value)}</div>
       <div className="flex items-center space-x-2 text-xs text-slate-500">
         {trend === "up" ? (
           <TrendingUp className="text-emerald-500" size={16} />
@@ -120,19 +65,16 @@ const SummaryCard = ({ title, value, trend, icon, trendValue }: { title: string;
   </Card>
 );
 
-interface Transaction {
-  id: number;
-  date: string;
-  category: string;
-  description: string;
-  amount: number;
-  icon: JSX.Element;
-}
-
-const TransactionItem = ({ transaction }: { transaction: Transaction }) => (
+const TransactionItem = ({ transaction }: { transaction: { id: string; type: "income" | "expense"; description: string; category: string; date: string; amount: number; } }) => (
   <div className="flex items-center justify-between py-3 border-b border-slate-100">
     <div className="flex items-center gap-3">
-      <div className="rounded-full bg-slate-100 p-2">{transaction.icon}</div>
+      <div className="rounded-full bg-slate-100 p-2">
+        {transaction.type === "income" ? (
+          <DollarSign size={16} />
+        ) : (
+          <DollarSign size={16} className="rotate-180" />
+        )}
+      </div>
       <div>
         <p className="font-medium text-sm">{transaction.description}</p>
         <p className="text-xs text-slate-500">
@@ -142,59 +84,133 @@ const TransactionItem = ({ transaction }: { transaction: Transaction }) => (
     </div>
     <div
       className={`font-mono font-medium ${
-        transaction.amount < 0 ? "text-rose-500" : "text-emerald-500"
+        transaction.type === "expense" ? "text-rose-500" : "text-emerald-500"
       }`}
     >
-      {transaction.amount < 0 ? "-" : "+"}$
+      {transaction.type === "expense" ? "-" : "+"}
       {Math.abs(transaction.amount).toFixed(2)}
     </div>
   </div>
 );
 
-const FinanceDashboard = () => {
+export default function FinanceDashboard() {
+  const { transactions, categories } = useFinance();
   const [activeChart, setActiveChart] = useState("expenses");
+
+  // Calculate summary values
+  const totalIncome = useMemo(
+    () =>
+      transactions
+        .filter((tx) => tx.type === "income")
+        .reduce((sum, tx) => sum + tx.amount, 0),
+    [transactions]
+  );
+  const totalExpenses = useMemo(
+    () =>
+      transactions
+        .filter((tx) => tx.type === "expense")
+        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0),
+    [transactions]
+  );
+  const balance = totalIncome - totalExpenses;
+
+  // Calculate expense totals by category
+  const expenseByCategory = useMemo(() => {
+    const map: Record<string, number> = {};
+    transactions
+      .filter((tx) => tx.type === "expense")
+      .forEach((tx) => {
+        map[tx.category] = (map[tx.category] || 0) + Math.abs(tx.amount);
+      });
+    return map;
+  }, [transactions]);
+  const topCategoryName =
+    Object.keys(expenseByCategory).reduce(
+      (a, b) => (expenseByCategory[a] > expenseByCategory[b] ? a : b),
+      ""
+    ) || "N/A";
+
+  // Prepare monthly data for the bar chart by grouping transactions by month
+  const monthlyData = useMemo(() => {
+    const dataMap: Record<
+      string,
+      { name: string; expenses: number; income: number }
+    > = {};
+    transactions.forEach((tx) => {
+      const date = new Date(tx.date);
+      const month = date.toLocaleString("default", { month: "short" });
+      if (!dataMap[month]) {
+        dataMap[month] = { name: month, expenses: 0, income: 0 };
+      }
+      if (tx.type === "income") {
+        dataMap[month].income += tx.amount;
+      } else {
+        dataMap[month].expenses += Math.abs(tx.amount);
+      }
+    });
+    return Object.values(dataMap);
+  }, [transactions]);
+
+  // Prepare pie chart data for expense categories
+  const categoryData = useMemo(() => {
+    return Object.keys(expenseByCategory).map((catName) => {
+      const category = categories.find((cat) => cat.name === catName);
+      return {
+        name: catName,
+        value: expenseByCategory[catName],
+        color: category ? category.color : "#a3a3a3",
+      };
+    });
+  }, [expenseByCategory, categories]);
+
+  // Get the 5 most recent transactions
+  const recentTransactions = useMemo(() => {
+    return [...transactions]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  }, [transactions]);
 
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex flex-1">
-        {/* Main content */}
+        {/* Main Content */}
         <main className="flex-1 p-4 bg-slate-50">
           <div className="mb-6">
             <h2 className="mb-4 text-xl font-bold">Dashboard</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <SummaryCard
                 title="Total Expenses"
-                value={-3245.5}
+                value={-totalExpenses}
                 trend="down"
-                trendValue={12}
+                trendValue={12} // Replace with dynamic month-over-month percentage
                 icon={<TrendingDown size={18} />}
               />
               <SummaryCard
                 title="Total Income"
-                value={5240.0}
+                value={totalIncome}
                 trend="up"
                 trendValue={8}
                 icon={<TrendingUp size={18} />}
               />
               <SummaryCard
                 title="Balance"
-                value={1994.5}
+                value={balance}
                 trend="up"
                 trendValue={5}
                 icon={<DollarSign size={18} />}
               />
               <SummaryCard
                 title="Top Category"
-                value={-1200.0}
+                value={expenseByCategory[topCategoryName] || 0}
                 trend="up"
                 trendValue={3}
-                icon={<Home size={18} />}
+                icon={<DollarSign size={18} />}
               />
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Monthly Chart */}
+            {/* Monthly Overview Chart */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>Monthly Overview</CardTitle>
@@ -221,7 +237,7 @@ const FinanceDashboard = () => {
                       <YAxis />
                       <Tooltip
                         formatter={(value) => [
-                          `$${value}`,
+                          formatCurrency(value),
                           activeChart === "expenses" ? "Expenses" : "Income",
                         ]}
                       />
@@ -244,7 +260,7 @@ const FinanceDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Category Chart */}
+            {/* Expense Categories Pie Chart */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>Expense Categories</CardTitle>
@@ -267,7 +283,9 @@ const FinanceDashboard = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
+                      <Tooltip
+                        formatter={(value) => [formatCurrency(value), "Amount"]}
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -291,7 +309,7 @@ const FinanceDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
-                {transactions.map((transaction) => (
+                {recentTransactions.map((transaction) => (
                   <TransactionItem
                     key={transaction.id}
                     transaction={transaction}
@@ -309,6 +327,4 @@ const FinanceDashboard = () => {
       </div>
     </div>
   );
-};
-
-export default FinanceDashboard;
+}
