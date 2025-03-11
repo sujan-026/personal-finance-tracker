@@ -96,7 +96,7 @@ const transactions = [
 ];
 
 // Custom components
-const SummaryCard = ({ title, value, trend, icon, trendValue }) => (
+const SummaryCard = ({ title, value, trend, icon, trendValue }: { title: string; value: number; trend: "up" | "down"; icon: JSX.Element; trendValue: number; }) => (
   <Card className="shadow-sm">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -120,7 +120,16 @@ const SummaryCard = ({ title, value, trend, icon, trendValue }) => (
   </Card>
 );
 
-const TransactionItem = ({ transaction }) => (
+interface Transaction {
+  id: number;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  icon: JSX.Element;
+}
+
+const TransactionItem = ({ transaction }: { transaction: Transaction }) => (
   <div className="flex items-center justify-between py-3 border-b border-slate-100">
     <div className="flex items-center gap-3">
       <div className="rounded-full bg-slate-100 p-2">{transaction.icon}</div>
