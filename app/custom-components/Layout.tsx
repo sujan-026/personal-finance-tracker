@@ -1,25 +1,24 @@
-"use client"; // Mark this file as a client component
+// components/Layout.tsx
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // Use next/navigation instead
+import { usePathname } from "next/navigation";
 import { Activity, CreditCard, Gift, DollarSign, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import FinanceDashboard from "./custom-components/dashboard";
+const navItems = [
+  { name: "Dashboard", href: "/", icon: Activity },
+  { name: "Transactions", href: "/transactions", icon: CreditCard },
+  { name: "Categories", href: "/categories", icon: Gift },
+  { name: "Budget", href: "/budget", icon: DollarSign },
+];
 
-export default function App() {
-  const pathname = usePathname(); // Get the current path
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isActive = (path: string): boolean => pathname === path;
-
-  const navItems = [
-    { name: "Dashboard", href: "/", icon: Activity },
-    { name: "Transactions", href: "/transactions", icon: CreditCard },
-    { name: "Categories", href: "/categories", icon: Gift },
-    { name: "Budget", href: "/budget", icon: DollarSign },
-  ];
+  const isActive = (path: string) => pathname === path;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -36,8 +35,7 @@ export default function App() {
             </button>
           </div>
         </div>
-
-        {/* Mobile menu */}
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 pb-2 border-b">
             <nav className="space-y-2">
@@ -63,7 +61,7 @@ export default function App() {
       </header>
 
       <div className="flex flex-1">
-        {/* Side Navigation - Hidden on mobile */}
+        {/* Side Navigation (hidden on mobile) */}
         <aside className="hidden w-64 border-r p-4 md:block">
           <nav className="space-y-2">
             {navItems.map((item) => (
@@ -84,13 +82,13 @@ export default function App() {
           </nav>
         </aside>
 
-        {/* Main content */}
+        {/* Main Content */}
         <main className="flex-1 p-4 bg-slate-50 overflow-y-auto">
-          <FinanceDashboard />
+          {children}
         </main>
       </div>
 
-      {/* Mobile navigation */}
+      {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-white p-2">
         <div className="flex justify-around">
           {navItems.map((item) => (
